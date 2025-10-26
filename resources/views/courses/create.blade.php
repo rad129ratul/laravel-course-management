@@ -1,3 +1,4 @@
+{{-- resources/views/courses/create.blade.php (Updated) --}}
 @extends('layouts.app')
 
 @section('title', 'Create Course')
@@ -75,7 +76,11 @@
 
             <div class="mb-3">
                 <label class="form-label">Module Title *</label>
-                <input type="text" class="form-control" name="modules[0][title]" required>
+                <input type="text" class="form-control @error('modules.0.title') is-invalid @enderror" 
+                       name="modules[0][title]" value="{{ old('modules.0.title') }}" required>
+                @error('modules.0.title')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="contents-container" data-module-index="0">
@@ -86,54 +91,89 @@
 
                     <div class="mb-3">
                         <label class="form-label">Content Title</label>
-                        <input type="text" class="form-control" name="modules[0][contents][0][title]">
+                        <input type="text" class="form-control @error('modules.0.contents.0.title') is-invalid @enderror" 
+                               name="modules[0][contents][0][title]" value="{{ old('modules.0.contents.0.title') }}">
+                        @error('modules.0.contents.0.title')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Video Source Type</label>
-                            <select class="form-select video-source-type" name="modules[0][contents][0][video_source_type]">
+                            <select class="form-select video-source-type @error('modules.0.contents.0.video_source_type') is-invalid @enderror" 
+                                    name="modules[0][contents][0][video_source_type]">
                                 <option value="">Select Source</option>
-                                <option value="youtube">YouTube</option>
-                                <option value="vimeo">Vimeo</option>
-                                <option value="upload">Upload Video</option>
+                                <option value="youtube" {{ old('modules.0.contents.0.video_source_type') == 'youtube' ? 'selected' : '' }}>YouTube</option>
+                                <option value="vimeo" {{ old('modules.0.contents.0.video_source_type') == 'vimeo' ? 'selected' : '' }}>Vimeo</option>
+                                <option value="upload" {{ old('modules.0.contents.0.video_source_type') == 'upload' ? 'selected' : '' }}>Upload Video</option>
                             </select>
+                            @error('modules.0.contents.0.video_source_type')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Video Length</label>
-                            <input type="text" class="form-control" name="modules[0][contents][0][video_length]" placeholder="e.g., 10:30">
+                            <input type="text" class="form-control @error('modules.0.contents.0.video_length') is-invalid @enderror" 
+                                   name="modules[0][contents][0][video_length]" value="{{ old('modules.0.contents.0.video_length') }}" 
+                                   placeholder="e.g., 10:30">
+                            @error('modules.0.contents.0.video_length')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="mb-3 video-url-container">
                         <label class="form-label">Video URL</label>
-                        <input type="url" class="form-control" name="modules[0][contents][0][video_url]" placeholder="https://youtube.com/watch?v=...">
+                        <input type="url" class="form-control @error('modules.0.contents.0.video_url') is-invalid @enderror" 
+                               name="modules[0][contents][0][video_url]" value="{{ old('modules.0.contents.0.video_url') }}" 
+                               placeholder="https://youtube.com/watch?v=...">
+                        @error('modules.0.contents.0.video_url')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3 video-upload-container" style="display:none;">
                         <label class="form-label">Upload Video</label>
-                        <input type="file" class="form-control" name="modules[0][contents][0][video_file]" accept="video/*">
+                        <input type="file" class="form-control @error('modules.0.contents.0.video_file') is-invalid @enderror" 
+                               name="modules[0][contents][0][video_file]" accept="video/*">
+                        @error('modules.0.contents.0.video_file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Content Text</label>
-                        <textarea class="form-control" name="modules[0][contents][0][content_text]" rows="3"></textarea>
+                        <textarea class="form-control @error('modules.0.contents.0.content_text') is-invalid @enderror" 
+                                  name="modules[0][contents][0][content_text]" rows="3">{{ old('modules.0.contents.0.content_text') }}</textarea>
+                        @error('modules.0.contents.0.content_text')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Image (Optional)</label>
-                        <input type="file" class="form-control" name="modules[0][contents][0][image_file]" accept="image/*">
+                        <input type="file" class="form-control @error('modules.0.contents.0.image_file') is-invalid @enderror" 
+                               name="modules[0][contents][0][image_file]" accept="image/*">
+                        <small class="text-muted">Max size: 2MB. Formats: jpg, jpeg, png, gif, webp</small>
+                        @error('modules.0.contents.0.image_file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Column Position</label>
-                        <select class="form-select" name="modules[0][contents][0][column_position]">
+                        <select class="form-select @error('modules.0.contents.0.column_position') is-invalid @enderror" 
+                                name="modules[0][contents][0][column_position]">
                             <option value="">Select Column</option>
-                            <option value="left">Left</option>
-                            <option value="right">Right</option>
-                            <option value="full">Full Width</option>
+                            <option value="left" {{ old('modules.0.contents.0.column_position') == 'left' ? 'selected' : '' }}>Left</option>
+                            <option value="right" {{ old('modules.0.contents.0.column_position') == 'right' ? 'selected' : '' }}>Right</option>
+                            <option value="full" {{ old('modules.0.contents.0.column_position') == 'full' ? 'selected' : '' }}>Full Width</option>
                         </select>
+                        @error('modules.0.contents.0.column_position')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
             </div>
