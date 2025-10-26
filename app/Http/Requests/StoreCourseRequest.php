@@ -13,11 +13,10 @@ class StoreCourseRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'title' => 'required|string|max:255',
+        $rules = [
+                'title' => 'required|string|max:255',
             'description' => 'required|string',
             'category' => 'required|string|max:255',
-            'feature_video' => 'required|file|mimes:mp4,mov,avi,wmv,flv|max:51200',
             'modules' => 'required|array|min:1',
             'modules.*.title' => 'required|string|max:255',
             'modules.*.contents' => 'nullable|array',
@@ -32,6 +31,14 @@ class StoreCourseRequest extends FormRequest
             'modules.*.contents.*.document_file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:10240',
             'modules.*.contents.*.column_position' => 'nullable|string|max:50',
         ];
+
+        if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
+            $rules['feature_video'] = 'nullable|file|mimes:mp4,mov,avi,wmv,flv|max:51200';
+        } else {
+            $rules['feature_video'] = 'required|file|mimes:mp4,mov,avi,wmv,flv|max:51200';
+        }
+
+        return $rules;
     }
 
     public function messages(): array
