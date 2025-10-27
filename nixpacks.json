@@ -1,14 +1,17 @@
 {
   "phases": {
+    "setup": {
+      "nixPkgs": ["php82", "php82Extensions.mbstring", "php82Extensions.pdo", "php82Extensions.tokenizer", "php82Extensions.xml", "php82Extensions.ctype", "php82Extensions.json", "php82Extensions.bcmath", "php82Extensions.fileinfo"]
+    },
     "install": {
       "cmds": [
-        "composer install --no-dev --optimize-autoloader",
-        "npm ci",
+        "composer install --no-dev --optimize-autoloader --no-interaction",
+        "npm ci --no-audit",
         "npm run build"
       ]
     }
   },
   "start": {
-    "cmd": "php artisan config:cache && php artisan migrate --force && php artisan db:seed --force && php artisan storage:link && php artisan serve --host=0.0.0.0 --port=$PORT"
+    "cmd": "php -c php.ini -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp artisan storage:link && php -c php.ini -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp artisan config:cache && php -c php.ini -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp artisan migrate --force && php -c php.ini -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp artisan db:seed --force && php -c php.ini -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp artisan serve --host=0.0.0.0 --port=$PORT"
   }
 }

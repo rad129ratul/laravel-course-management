@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/CourseController.php
 
 namespace App\Http\Controllers;
 
@@ -62,52 +61,140 @@ class CourseController extends Controller
         try {
             $data = $request->validated();
 
+            // Enhanced feature video upload with detailed logging
             if ($request->hasFile('feature_video')) {
+                $file = $request->file('feature_video');
+                
+                // Detailed logging for debugging
+                Log::info('Feature video upload attempt', [
+                    'original_name' => $file->getClientOriginalName(),
+                    'size_bytes' => $file->getSize(),
+                    'size_mb' => round($file->getSize() / 1024 / 1024, 2),
+                    'mime_type' => $file->getMimeType(),
+                    'extension' => $file->getClientOriginalExtension(),
+                    'error_code' => $file->getError(),
+                    'is_valid' => $file->isValid(),
+                    'tmp_path' => $file->getRealPath(),
+                    'upload_tmp_dir' => ini_get('upload_tmp_dir'),
+                    'sys_temp_dir' => sys_get_temp_dir(),
+                    'temp_writable' => is_writable(sys_get_temp_dir()),
+                ]);
+                
+                // Check for upload errors
+                if ($file->getError() !== UPLOAD_ERR_OK) {
+                    $errorMessages = [
+                        UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+                        UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                        UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                        UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                        UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                        UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                        UPLOAD_ERR_EXTENSION => 'PHP extension stopped upload',
+                    ];
+                    
+                    $errorMsg = $errorMessages[$file->getError()] ?? 'Unknown upload error';
+                    
+                    Log::error('Feature video upload error', [
+                        'error_code' => $file->getError(),
+                        'error_message' => $errorMsg
+                    ]);
+                    
+                    throw new Exception("Feature video upload failed: {$errorMsg}");
+                }
+                
+                // Check if file is valid
+                if (!$file->isValid()) {
+                    Log::error('Feature video file is invalid');
+                    throw new Exception('Feature video file is invalid or corrupted');
+                }
+                
                 try {
                     $data['feature_video_path'] = $this->fileService->uploadVideo(
-                        $request->file('feature_video'),
+                        $file,
                         'videos/features'
                     );
+                    
+                    Log::info('Feature video uploaded successfully', [
+                        'path' => $data['feature_video_path']
+                    ]);
                 } catch (Exception $e) {
-                    Log::error('Feature video upload failed: ' . $e->getMessage());
-                    throw new Exception('Failed to upload feature video. Please check file size and format.');
+                    Log::error('Feature video upload service failed', [
+                        'message' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw new Exception('Failed to save feature video: ' . $e->getMessage());
                 }
             }
 
+            // Process module contents with file uploads
             if (isset($data['modules'])) {
                 foreach ($data['modules'] as $moduleIndex => &$module) {
                     if (isset($module['contents'])) {
                         foreach ($module['contents'] as $contentIndex => &$content) {
                             
                             try {
+                                // Video file upload
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.video_file")) {
+                                    $videoFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.video_file");
+                                    
+                                    if ($videoFile->getError() !== UPLOAD_ERR_OK) {
+                                        Log::warning("Content video upload error for module {$moduleIndex}, content {$contentIndex}", [
+                                            'error_code' => $videoFile->getError()
+                                        ]);
+                                        continue; // Skip this file but continue processing
+                                    }
+                                    
                                     $content['video_path'] = $this->fileService->uploadVideo(
-                                        $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.video_file"),
+                                        $videoFile,
                                         'videos/contents'
                                     );
                                     $content['type'] = 'video';
                                 }
 
+                                // Image file upload
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.image_file")) {
+                                    $imageFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.image_file");
+                                    
+                                    if ($imageFile->getError() !== UPLOAD_ERR_OK) {
+                                        Log::warning("Content image upload error for module {$moduleIndex}, content {$contentIndex}", [
+                                            'error_code' => $imageFile->getError()
+                                        ]);
+                                        continue;
+                                    }
+                                    
                                     $content['image_path'] = $this->fileService->uploadImage(
-                                        $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.image_file"),
+                                        $imageFile,
                                         'images/contents'
                                     );
                                     $content['type'] = $content['type'] ?? 'image';
                                 }
 
+                                // Document file upload
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.document_file")) {
+                                    $docFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.document_file");
+                                    
+                                    if ($docFile->getError() !== UPLOAD_ERR_OK) {
+                                        Log::warning("Content document upload error for module {$moduleIndex}, content {$contentIndex}", [
+                                            'error_code' => $docFile->getError()
+                                        ]);
+                                        continue;
+                                    }
+                                    
                                     $content['document_path'] = $this->fileService->uploadDocument(
-                                        $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.document_file"),
+                                        $docFile,
                                         'documents/contents'
                                     );
                                     $content['type'] = $content['type'] ?? 'document';
                                 }
                             } catch (Exception $e) {
-                                Log::error("Content file upload failed for module {$moduleIndex}, content {$contentIndex}: " . $e->getMessage());
-                                throw new Exception("Failed to upload file in Module " . ($moduleIndex + 1) . ", Content " . ($contentIndex + 1));
+                                Log::error("Content file upload failed for module {$moduleIndex}, content {$contentIndex}", [
+                                    'message' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString()
+                                ]);
+                                throw new Exception("Failed to upload file in Module " . ($moduleIndex + 1) . ", Content " . ($contentIndex + 1) . ": " . $e->getMessage());
                             }
 
+                            // Set default content type
                             if (empty($content['type'])) {
                                 if (!empty($content['video_url'])) {
                                     $content['type'] = 'video';
@@ -122,11 +209,15 @@ class CourseController extends Controller
                 }
             }
 
+            // Create course with all data
             $course = $this->courseRepository->createCourse($data);
 
             DB::commit();
 
-            Log::info('Course created successfully', ['course_id' => $course->id]);
+            Log::info('Course created successfully', [
+                'course_id' => $course->id,
+                'title' => $course->title
+            ]);
 
             return redirect()
                 ->route('courses.show', $course->id)
@@ -146,6 +237,7 @@ class CourseController extends Controller
             DB::rollBack();
             Log::error('Database error creating course: ' . $e->getMessage(), [
                 'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
                 'trace' => $e->getTraceAsString()
             ]);
             return back()
@@ -203,6 +295,12 @@ class CourseController extends Controller
             $data = $request->validated();
 
             if ($request->hasFile('feature_video')) {
+                $file = $request->file('feature_video');
+                
+                if ($file->getError() !== UPLOAD_ERR_OK || !$file->isValid()) {
+                    throw new Exception('Invalid feature video file');
+                }
+                
                 try {
                     $course = $this->courseRepository->getCourseWithRelations($id);
                     
@@ -211,7 +309,7 @@ class CourseController extends Controller
                     }
                     
                     $data['feature_video_path'] = $this->fileService->uploadVideo(
-                        $request->file('feature_video'),
+                        $file,
                         'videos/features'
                     );
                 } catch (Exception $e) {
@@ -227,27 +325,39 @@ class CourseController extends Controller
                             
                             try {
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.video_file")) {
-                                    $content['video_path'] = $this->fileService->uploadVideo(
-                                        $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.video_file"),
-                                        'videos/contents'
-                                    );
-                                    $content['type'] = 'video';
+                                    $videoFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.video_file");
+                                    
+                                    if ($videoFile->getError() === UPLOAD_ERR_OK && $videoFile->isValid()) {
+                                        $content['video_path'] = $this->fileService->uploadVideo(
+                                            $videoFile,
+                                            'videos/contents'
+                                        );
+                                        $content['type'] = 'video';
+                                    }
                                 }
 
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.image_file")) {
-                                    $content['image_path'] = $this->fileService->uploadImage(
-                                        $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.image_file"),
-                                        'images/contents'
-                                    );
-                                    $content['type'] = $content['type'] ?? 'image';
+                                    $imageFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.image_file");
+                                    
+                                    if ($imageFile->getError() === UPLOAD_ERR_OK && $imageFile->isValid()) {
+                                        $content['image_path'] = $this->fileService->uploadImage(
+                                            $imageFile,
+                                            'images/contents'
+                                        );
+                                        $content['type'] = $content['type'] ?? 'image';
+                                    }
                                 }
 
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.document_file")) {
-                                    $content['document_path'] = $this->fileService->uploadDocument(
-                                        $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.document_file"),
-                                        'documents/contents'
-                                    );
-                                    $content['type'] = $content['type'] ?? 'document';
+                                    $docFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.document_file");
+                                    
+                                    if ($docFile->getError() === UPLOAD_ERR_OK && $docFile->isValid()) {
+                                        $content['document_path'] = $this->fileService->uploadDocument(
+                                            $docFile,
+                                            'documents/contents'
+                                        );
+                                        $content['type'] = $content['type'] ?? 'document';
+                                    }
                                 }
                             } catch (Exception $e) {
                                 Log::error("Content file upload failed during update: " . $e->getMessage());
