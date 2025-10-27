@@ -10,14 +10,6 @@ use Exception;
 
 class FileUploadService
 {
-    /**
-     * Upload video file
-     *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @return string
-     * @throws Exception
-     */
     public function uploadVideo(UploadedFile $file, string $directory = 'videos'): string
     {
         try {
@@ -33,14 +25,6 @@ class FileUploadService
         }
     }
 
-    /**
-     * Upload image file
-     *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @return string
-     * @throws Exception
-     */
     public function uploadImage(UploadedFile $file, string $directory = 'images'): string
     {
         try {
@@ -55,14 +39,6 @@ class FileUploadService
         }
     }
 
-    /**
-     * Upload document file
-     *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @return string
-     * @throws Exception
-     */
     public function uploadDocument(UploadedFile $file, string $directory = 'documents'): string
     {
         try {
@@ -77,13 +53,6 @@ class FileUploadService
         }
     }
 
-    /**
-     * Delete a file from storage
-     *
-     * @param string|null $path
-     * @return bool
-     * @throws Exception
-     */
     public function deleteFile(?string $path): bool
     {
         if (!$path) {
@@ -112,25 +81,15 @@ class FileUploadService
         }
     }
 
-    /**
-     * Validate uploaded file
-     *
-     * @param UploadedFile $file
-     * @param array $allowedExtensions
-     * @param int $maxSizeKB
-     * @return void
-     * @throws Exception
-     */
     private function validateFile(UploadedFile $file, array $allowedExtensions, int $maxSizeKB): void
     {
-        // Check file extension
         $extension = strtolower($file->getClientOriginalExtension());
         
         if (!in_array($extension, $allowedExtensions)) {
             throw new Exception("Invalid file type '{$extension}'. Allowed: " . implode(', ', $allowedExtensions));
         }
 
-        // Check file size
+        // file size check
         $fileSizeKB = $file->getSize() / 1024;
         $fileSizeMB = round($fileSizeKB / 1024, 2);
         
@@ -139,28 +98,18 @@ class FileUploadService
             throw new Exception("File size ({$fileSizeMB}MB) exceeds limit of {$maxSizeMB}MB");
         }
 
-        // Check if file is actually uploaded
+        // file uploaded check
         if (!$file->isValid()) {
             throw new Exception("File is invalid or was not properly uploaded");
         }
     }
 
-    /**
-     * Store file to disk
-     *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @return string
-     * @throws Exception
-     */
     private function storeFile(UploadedFile $file, string $directory): string
     {
         try {
-            // Generate unique filename
             $extension = $file->getClientOriginalExtension();
             $filename = Str::random(40) . '_' . time() . '.' . $extension;
             
-            // Log storage attempt
             Log::info('Attempting to store file', [
                 'filename' => $filename,
                 'directory' => $directory,
@@ -171,21 +120,21 @@ class FileUploadService
                 'storage_writable' => is_writable(storage_path('app/public')),
             ]);
             
-            // Ensure directory exists
+            // directory exists check
             $fullPath = storage_path('app/public/' . $directory);
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0755, true);
                 Log::info('Created directory', ['path' => $fullPath]);
             }
             
-            // Store file
+            // Store
             $path = $file->storeAs($directory, $filename, 'public');
             
             if (!$path) {
                 throw new Exception("Failed to store file - storeAs returned false");
             }
 
-            // Verify file was stored
+            // Verify stored
             if (!Storage::disk('public')->exists($path)) {
                 throw new Exception("File was not found after storage attempt");
             }
@@ -208,12 +157,6 @@ class FileUploadService
         }
     }
 
-    /**
-     * Get public URL for file
-     *
-     * @param string|null $path
-     * @return string|null
-     */
     public function getFileUrl(?string $path): ?string
     {
         if (!$path) {
@@ -231,12 +174,6 @@ class FileUploadService
         }
     }
 
-    /**
-     * Check if file exists
-     *
-     * @param string|null $path
-     * @return bool
-     */
     public function fileExists(?string $path): bool
     {
         if (!$path) {
@@ -254,12 +191,6 @@ class FileUploadService
         }
     }
 
-    /**
-     * Get file size in KB
-     *
-     * @param string|null $path
-     * @return int|null
-     */
     public function getFileSize(?string $path): ?int
     {
         if (!$path || !$this->fileExists($path)) {

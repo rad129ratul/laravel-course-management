@@ -61,11 +61,9 @@ class CourseController extends Controller
         try {
             $data = $request->validated();
 
-            // Enhanced feature video upload with detailed logging
             if ($request->hasFile('feature_video')) {
                 $file = $request->file('feature_video');
                 
-                // Detailed logging for debugging
                 Log::info('Feature video upload attempt', [
                     'original_name' => $file->getClientOriginalName(),
                     'size_bytes' => $file->getSize(),
@@ -80,7 +78,6 @@ class CourseController extends Controller
                     'temp_writable' => is_writable(sys_get_temp_dir()),
                 ]);
                 
-                // Check for upload errors
                 if ($file->getError() !== UPLOAD_ERR_OK) {
                     $errorMessages = [
                         UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
@@ -102,7 +99,7 @@ class CourseController extends Controller
                     throw new Exception("Feature video upload failed: {$errorMsg}");
                 }
                 
-                // Check if file is valid
+                // valid check
                 if (!$file->isValid()) {
                     Log::error('Feature video file is invalid');
                     throw new Exception('Feature video file is invalid or corrupted');
@@ -126,14 +123,14 @@ class CourseController extends Controller
                 }
             }
 
-            // Process module contents with file uploads
+            // file uploads
             if (isset($data['modules'])) {
                 foreach ($data['modules'] as $moduleIndex => &$module) {
                     if (isset($module['contents'])) {
                         foreach ($module['contents'] as $contentIndex => &$content) {
                             
                             try {
-                                // Video file upload
+                                // Video upload
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.video_file")) {
                                     $videoFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.video_file");
                                     
@@ -141,7 +138,7 @@ class CourseController extends Controller
                                         Log::warning("Content video upload error for module {$moduleIndex}, content {$contentIndex}", [
                                             'error_code' => $videoFile->getError()
                                         ]);
-                                        continue; // Skip this file but continue processing
+                                        continue;
                                     }
                                     
                                     $content['video_path'] = $this->fileService->uploadVideo(
@@ -151,7 +148,7 @@ class CourseController extends Controller
                                     $content['type'] = 'video';
                                 }
 
-                                // Image file upload
+                                // Image upload
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.image_file")) {
                                     $imageFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.image_file");
                                     
@@ -169,7 +166,6 @@ class CourseController extends Controller
                                     $content['type'] = $content['type'] ?? 'image';
                                 }
 
-                                // Document file upload
                                 if ($request->hasFile("modules.{$moduleIndex}.contents.{$contentIndex}.document_file")) {
                                     $docFile = $request->file("modules.{$moduleIndex}.contents.{$contentIndex}.document_file");
                                     
@@ -194,7 +190,7 @@ class CourseController extends Controller
                                 throw new Exception("Failed to upload file in Module " . ($moduleIndex + 1) . ", Content " . ($contentIndex + 1) . ": " . $e->getMessage());
                             }
 
-                            // Set default content type
+                            // Set type
                             if (empty($content['type'])) {
                                 if (!empty($content['video_url'])) {
                                     $content['type'] = 'video';
@@ -209,7 +205,7 @@ class CourseController extends Controller
                 }
             }
 
-            // Create course with all data
+            // course create
             $course = $this->courseRepository->createCourse($data);
 
             DB::commit();
