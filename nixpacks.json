@@ -28,6 +28,6 @@
     }
   },
   "start": {
-    "cmd": "php artisan config:clear && php artisan cache:clear && php artisan migrate --force && php artisan storage:link && php -d upload_max_filesize=100M -d post_max_size=100M -d memory_limit=512M -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp artisan serve --host=0.0.0.0 --port=$PORT"
+    "cmd": "php artisan config:clear && php artisan cache:clear && php artisan migrate --force && php artisan storage:link && php -d upload_max_filesize=100M -d post_max_size=110M -d memory_limit=512M -d upload_tmp_dir=/tmp -d sys_temp_dir=/tmp -d max_file_uploads=20 -d max_execution_time=300 -d max_input_time=300 artisan serve --host=0.0.0.0 --port=$PORT"
   }
 }
