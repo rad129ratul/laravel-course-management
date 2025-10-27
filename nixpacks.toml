@@ -1,5 +1,5 @@
 [phpenv]
-version = "8.2"
+version = "8.2.12"
 
 [phpextensions]
 pdo = "latest"
