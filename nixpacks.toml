@@ -1,3 +1,6 @@
+[phpenv]
+version = "8.2"
+
 [phpextensions]
 pdo = "latest"
 pdo_mysql = "latest"
@@ -11,4 +14,4 @@ version = "18"
 command = "composer install --no-dev --optimize-autoloader && npm install && npm run build"
 
 [start]
-command = "php artisan migrate:status || echo 'Migrations not run'; php artisan storage:link && php artisan config:cache && php -S 0.0.0.0:$PORT public/index.php"
+command = "php artisan migrate --force && php artisan storage:link && php -S 0.0.0.0:$PORT public/index.php"
