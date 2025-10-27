@@ -11,8 +11,7 @@
         "php82Extensions.bcmath",
         "php82Extensions.fileinfo",
         "php82Packages.composer",
-        "nodejs-18_x",
-        "nodePackages.npm"
+        "nodejs-18_x"
       ]
     },
     "install": {
