@@ -1,7 +1,7 @@
 {
   "phases": {
     "setup": {
-      "nixPkgs": ["php82", "php82Extensions.mbstring", "php82Extensions.pdo", "php82Extensions.tokenizer", "php82Extensions.xml", "php82Extensions.ctype", "php82Extensions.json", "php82Extensions.bcmath", "php82Extensions.fileinfo"]
+      "nixPkgs": ["php82", "php82Extensions.mbstring", "php82Extensions.pdo", "php82Extensions.tokenizer", "php82Extensions.xml", "php82Extensions.ctype", "php82Extensions.bcmath", "php82Extensions.fileinfo"]
     },
     "install": {
       "cmds": [
