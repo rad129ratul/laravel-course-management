@@ -1,17 +1,34 @@
-[phpenv]
-version = "8.2.12"
+# Nixpacks Configuration for Railway Deployment
+# Laravel Course Management System
 
-[phpextensions]
-pdo = "latest"
-pdo_mysql = "latest"
-gd = "latest"
-zip = "latest"
+# Setup Phase - Install Required Packages
+[phases.setup]
+nixPkgs = [
+    "php82",
+    "php82Extensions.pdo",
+    "php82Extensions.pdo_mysql",
+    "php82Extensions.gd",
+    "php82Extensions.zip",
+    "php82Extensions.mbstring",
+    "nginx"
+]
 
-[nodejs]
-version = "18"
+# Install Phase - Dependencies
+[phases.install]
+cmds = [
+    "composer install --no-dev --optimize-autoloader --no-interaction",
+    "npm install",
+    "npm run build"
+]
 
-[build]
-command = "composer install --no-dev --optimize-autoloader && npm install && npm run build"
+# Build Phase - Cache Configuration
+[phases.build]
+cmds = [
+    "php artisan config:cache",
+    "php artisan route:cache",
+    "php artisan view:cache"
+]
 
+# Start Command - Migration, Seeding, and Server
 [start]
-command = "echo '=== Starting Database Migrations ===' && php -d upload_max_filesize=100M -d post_max_size=100M -d memory_limit=256M artisan migrate --force && echo '=== Seeding Database ===' && php -d upload_max_filesize=100M -d post_max_size=100M artisan db:seed --force && echo '=== Creating Storage Link ===' && php -d upload_max_filesize=100M -d post_max_size=100M artisan storage:link && echo '=== Starting Server ===' && php -d upload_max_filesize=100M -d post_max_size=100M -d memory_limit=256M -S 0.0.0.0:$PORT public/index.php"
+cmd = "php -d upload_max_filesize=100M -d post_max_size=100M -d memory_limit=512M artisan migrate --force && php -d upload_max_filesize=100M -d post_max_size=100M artisan db:seed --force && php -d upload_max_filesize=100M -d post_max_size=100M artisan storage:link && php -d upload_max_filesize=100M -d post_max_size=100M -d memory_limit=512M -S 0.0.0.0:$PORT -t public"
