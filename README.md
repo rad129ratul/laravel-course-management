@@ -202,7 +202,7 @@ Built with security in mind:
 - ✅ XSS protection
 - ✅ Secure file uploads
 
-## 📝 Database
+## 📊 Database
 
 The app uses three simple tables:
 
@@ -212,15 +212,126 @@ The app uses three simple tables:
 
 Everything is connected with proper relationships.
 
+## 🔧 Troubleshooting
+
+### ⚠️ Common Issues
+
+#### 1. "This site can't be reached" or "ERR_CONNECTION_CLOSED"
+
+**Problem:** You're trying to access the site using HTTPS instead of HTTP.
+
+**Solution:** Make sure you're using `http://` (not `https://`) in your browser:
+
+```
+✅ Correct:   http://localhost:8000
+❌ Incorrect: https://localhost:8000
+```
+
+**Why this happens:**
+- `php artisan serve` only supports HTTP, not HTTPS
+- Your browser might auto-upgrade to HTTPS after visiting the Railway deployment
+- Chrome/Edge browsers often force HTTPS for security
+
+**Additional fixes if needed:**
+
+1. **Clear browser cache:**
+   - Chrome: Press `Ctrl + Shift + Delete`
+   - Select "Cached images and files"
+   - Clear data
+
+2. **Force HTTP in Chrome:**
+   - Visit `chrome://net-internals/#hsts`
+   - Under "Delete domain security policies"
+   - Enter: `localhost`
+   - Click "Delete"
+
+3. **Use a different port:**
+   ```bash
+   php artisan serve --port=8080
+   ```
+   Then access: `http://localhost:8080`
+
+4. **Use Incognito/Private browsing mode** to avoid cached settings
+
+#### 2. Files Not Uploading
+
+**Problem:** Video or image uploads failing.
+
+**Solution:**
+- Check `php.ini` file upload limits:
+  ```ini
+  upload_max_filesize = 100M
+  post_max_size = 100M
+  max_execution_time = 300
+  ```
+- Restart PHP server after changing `php.ini`
+- Ensure `storage/app/public` has write permissions
+- Run `php artisan storage:link` if files don't appear
+
+#### 3. Database Connection Error
+
+**Problem:** "SQLSTATE[HY000] [2002] Connection refused"
+
+**Solution:**
+- Make sure MySQL is running
+- Check database credentials in `.env` file
+- Create the database: `CREATE DATABASE course_management;`
+- Test connection: `php artisan migrate:status`
+
+#### 4. 404 Not Found on Routes
+
+**Problem:** All pages show 404 error.
+
+**Solution:**
+```bash
+php artisan route:clear
+php artisan cache:clear
+php artisan config:clear
+```
+
+#### 5. Styles Not Loading
+
+**Problem:** Page looks broken, no colors/styling.
+
+**Solution:**
+```bash
+npm install
+npm run build
+php artisan config:clear
+```
+
+### 📝 Checking Logs
+
+If you encounter errors, check:
+```bash
+# Laravel error log
+tail -f storage/logs/laravel.log
+
+# PHP error log (location varies)
+# Windows XAMPP: C:\xampp\apache\logs\error.log
+# Mac: /usr/local/var/log/php-fpm.log
+```
+
+### 🆘 Still Stuck?
+
+1. Check the Laravel documentation: https://laravel.com/docs
+2. Search your error message on Stack Overflow
+3. Check the terminal where `php artisan serve` is running for error messages
+4. Enable debug mode temporarily: Set `APP_DEBUG=true` in `.env`
+
 ## 🤝 Need Help?
 
 If you run into issues:
-1. Check the error message carefully
+1. Check the troubleshooting section above
 2. Look in `storage/logs/laravel.log` for details
-3. Search the error on Google
+3. Search the error on Google or Stack Overflow
 4. Check Laravel documentation
 
 ## 📧 Contact
 
 **Email:** ratulrs29@gmail.com  
 **GitHub:** https://github.com/rad129ratul
+
+---
+
+**Note:** Always use `http://localhost:8000` for local development, not `https://`
